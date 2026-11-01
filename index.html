@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0b">
+<title>SkicksFight — Dots & Boxes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+:root{--bg:#090909;--panel:#111;--panel2:#171717;--line:#292929;--orange:#ff7a18;--orange2:#ff9a45;--text:#f2eee9;--muted:#89837d;--p2:#777777;--green:#8bd49a}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -20%,#202020 0%,#111 42%,#090909 78%);color:var(--text);font-family:'IBM Plex Mono',Consolas,monospace;min-height:100vh}
+button,input{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1250px;margin:auto;padding:26px 22px 36px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #30251e;padding-bottom:17px;margin-bottom:25px;gap:18px}
+.brand{display:flex;align-items:center;gap:12px}.mark{width:38px;height:38px;border:1px solid var(--orange);color:var(--orange);display:grid;place-items:center;font-weight:700;font-size:18px;box-shadow:0 0 22px #ff7a1822}
+.brand-name{font-weight:700;letter-spacing:2px;font-size:16px}.brand-sub{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1.5px}
+.status{font-size:11px;color:var(--green);letter-spacing:1px}.status:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:8px;box-shadow:0 0 9px var(--green)}
+.intro{display:flex;justify-content:space-between;align-items:end;margin-bottom:22px;gap:16px}.eyebrow{font-size:10px;color:var(--orange);letter-spacing:2px;margin-bottom:9px}.intro h1{font-size:clamp(24px,4vw,38px);margin:0;letter-spacing:-1.5px}.intro p{color:var(--muted);font-size:12px;line-height:1.7;max-width:560px;margin:10px 0 0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;align-items:start}
+.board-panel,.side-panel{background:linear-gradient(145deg,#151515,#0e0e0e);border:1px solid #302820;box-shadow:0 18px 60px #0008}
+.panel-head{padding:14px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#c7bdb3;letter-spacing:1px}
+.panel-head span:last-child{color:var(--orange)}
+.board-wrap{padding:clamp(12px,2.5vw,26px);display:flex;justify-content:center;align-items:center}
+#board{width:min(100%,700px);aspect-ratio:1;display:block;touch-action:manipulation;user-select:none}
+.board-bg{fill:#151515;stroke:#343434;stroke-width:1}
+.edge{stroke:#555;stroke-width:5;stroke-linecap:round;cursor:pointer;transition:none}
+.edge:hover{stroke:var(--orange);filter:none}
+.edge.taken.p1{stroke:#ff7a18;stroke-width:6;filter:none;cursor:default}
+.edge.taken.p2{stroke:#626262;stroke-width:6;cursor:default}
+.edge.boundary{stroke:#ff7a18;stroke-width:6;cursor:default;pointer-events:none;filter:none}
+.dot{display:none}
+.cell-fill{opacity:.30}
+.cell-label{font-family:inherit;font-size:15px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.board-footer{border-top:1px solid var(--line);padding:12px 17px;display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px}
+.side-panel{padding:0 16px 16px}.side-panel .panel-head{margin:0 -16px 15px}
+.player{border:1px solid var(--line);padding:13px;margin-bottom:10px;position:relative;background:#101010}
+.player.active{border-color:var(--orange);box-shadow:inset 3px 0 var(--orange),0 0 18px #ff7a1810}
+.player-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.player-name{font-size:12px;font-weight:700;letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player-tag{font-size:9px;color:var(--muted);margin-top:5px}
+.score{font-size:27px;font-weight:700;margin-top:10px;color:var(--orange);font-variant-numeric:tabular-nums}
+.player.p2 .score{color:#8a8a8a}
+.turn-pill{font-size:9px;color:var(--orange);border:1px solid #75401f;padding:4px 6px;white-space:nowrap}
+.player.p2 .turn-pill{color:#aaa;border-color:#555}
+.progress{height:3px;background:#292929;margin-top:10px}.progress i{display:block;height:100%;background:var(--orange);width:0%;transition:width .2s}.p2 .progress i{background:#e7e0d7}
+.total{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;padding:9px 1px 16px}
+.turn-box{border:1px solid #4d2d19;background:#1a110b;padding:12px;margin:12px 0 16px}
+.turn-label{font-size:9px;color:var(--muted);letter-spacing:1px}.turn-text{font-size:12px;color:var(--orange);font-weight:700;margin-top:7px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.action{background:#171717;border:1px solid #3b332c;color:#ddd;padding:11px 8px;font-size:10px;letter-spacing:.3px;transition:.15s}
+.action:hover{border-color:var(--orange);color:var(--orange)}
+.action.primary{grid-column:1/-1;background:var(--orange);border-color:var(--orange);color:#100b07;font-weight:700}
+.action.primary:hover{background:#ff9848}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:9px}
+.legend span{display:flex;align-items:center;gap:6px}.swatch{width:12px;height:4px;background:var(--orange)}.swatch.white{background:#666}
+.rules{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}.rules h3{font-size:10px;color:var(--orange);letter-spacing:1.5px;margin:0 0 10px}.rules p{font-size:10px;color:var(--muted);line-height:1.8;margin:0}
+.modal{position:fixed;inset:0;background:#000c;display:none;place-items:center;padding:20px;z-index:5}.modal.show{display:grid}
+.modal-card{width:min(440px,100%);background:#111;border:1px solid var(--orange);padding:25px;box-shadow:0 0 60px #ff7a1820;text-align:center}
+.modal-card h2{color:var(--orange);font-size:23px;margin:0 0 10px}.modal-card p{color:#aaa;font-size:12px;line-height:1.7}
+.modal-card button{margin-top:12px;background:var(--orange);border:0;padding:12px 18px;font-weight:700;color:#100b07;font-size:11px}
+.name-edit{display:flex;gap:7px;margin:12px 0}.name-edit input{min-width:0;width:50%;background:#090909;border:1px solid #37302a;color:white;padding:9px;font-size:10px;outline:none}.name-edit input:focus{border-color:var(--orange)}
+footer{text-align:center;color:#514a43;font-size:9px;letter-spacing:1px;margin-top:24px}
+
+
+
+.empty-rooms{min-height:112px;border:1px dashed #3b3b3b;background:#111;display:grid;place-items:center;color:#888;font-size:13px;letter-spacing:.4px;text-align:center;padding:20px}
+.edge,.edge:hover{transition:none;filter:none}.cell-hit{fill:transparent;pointer-events:all}
+.cell-hit.hovered{fill:#ff7a18;opacity:.10}
+.nav-tab{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+#page-game .layout{margin-top:0}
+#page-game .board-panel{background:#141414}
+#page-game .board-wrap{background:#111}
+#page-game .panel-head{color:#eee}
+#page-game .panel-head span:last-child{color:var(--orange)}
+
+/* SkicksFight navigation + account pages */
+.shell{max-width:1320px}
+.topbar{min-height:72px;padding:10px 12px 10px 24px;border:1px solid #29292d;border-radius:42px;background:#141416;display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 34px;box-shadow:0 12px 38px #0005}
+.topbar .brand{border:0;text-decoration:none;min-width:220px}
+.topbar .mark{width:36px;height:36px;border-radius:12px;background:#0b0b0d;border-color:#25252a;box-shadow:none;font-style:italic}
+.topbar .brand-name{font-family:Arial,sans-serif;font-size:20px;letter-spacing:-.5px}
+.topbar .brand-sub{font-size:9px;letter-spacing:1px}
+.nav-tabs{display:flex;align-items:center;justify-content:center;gap:5px;flex:1}
+.nav-tab{background:transparent;border:1px solid transparent;border-radius:25px;padding:12px 19px;color:#a5a5b0;font-size:13px;transition:.18s}
+.nav-tab:hover{color:#fff;background:#202024}
+.nav-tab.active{color:#fff;background:#202024;border-color:#303036}
+.top-island{border:1px solid #303036;background:#1b1b20;border-radius:28px;padding:13px 23px;color:var(--orange);font-size:11px;white-space:nowrap}
+.top-island span{color:#eee;font-weight:700;letter-spacing:1px;margin-left:5px}
+.tab-page{display:none;animation:pageIn .25s ease}
+.tab-page.active{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.intro h1,.local-heading h2,.section-heading h2{font-family:Arial,sans-serif;letter-spacing:-1px}
+.rooms-panel{border:1px solid #302820;background:linear-gradient(145deg,#151515,#0e0e0e);padding:20px;margin:26px 0 34px}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:17px}
+.section-heading h2,.local-heading h2{font-size:23px;margin:0}
+.section-heading p,.local-heading p{color:var(--muted);font-size:11px;margin:8px 0 0}
+.create-room{grid-column:auto;white-space:nowrap;padding:13px 16px}
+.room-list{display:grid;gap:9px}
+.room-card{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:13px 14px;background:#101010;border:1px solid #292929}
+.room-info{display:flex;align-items:center;gap:12px;min-width:0}
+.room-info b{font-size:12px;display:block}.room-info small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
+.room-info small strong{color:#d7d0c9;font-weight:500}
+.room-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 9px #8bd49a66;flex:none}
+.room-state{font-size:9px;letter-spacing:1px;color:var(--green)}
+.join-room{padding:9px 13px;white-space:nowrap}
+.server-note{font-size:10px;color:#77716b;margin-top:14px;line-height:1.6}
+.discord-link{color:var(--orange);text-decoration:none}.discord-link:hover{text-decoration:underline}
+.local-heading{margin:0 0 16px}
+.profile-panel{display:grid;grid-template-columns:190px minmax(0,1fr);gap:28px;padding:30px;border:1px solid #302820;background:linear-gradient(145deg,#151515,#0e0e0e);align-items:center}
+.profile-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:13px}
+.profile-avatar{width:142px;height:142px;border-radius:50%;object-fit:cover;border:2px solid #47301f;background:#161616}
+.upload-label{display:inline-block;text-align:center;padding:10px 12px;font-size:9px}
+.profile-details h2{font-family:Arial,sans-serif;font-size:28px;margin:4px 0}
+.profile-details>p{color:var(--muted);font-size:11px}
+.profile-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0}
+.stat-card{border:1px solid #303030;background:#101010;padding:16px}
+.stat-card strong{display:block;color:var(--orange);font-size:25px}
+.stat-card span{display:block;color:var(--muted);font-size:9px;letter-spacing:.7px;margin-top:7px}
+.profile-hint{max-width:650px;line-height:1.7}
+.soon-page{min-height:60vh;display:none;place-items:center;text-align:center}
+.soon-page.active{display:grid}
+.soon-content{padding:50px 20px}
+.soon-mark{width:76px;height:76px;border:1px solid var(--orange);color:var(--orange);display:grid;place-items:center;margin:22px auto;font-size:25px;font-weight:700}
+.soon-content h1{font-family:Arial,sans-serif;font-size:clamp(42px,8vw,70px);margin:0;letter-spacing:-3px}
+.soon-content p{font-size:12px;color:var(--muted);margin:14px 0 22px}
+.soon-content>span{font-size:9px;letter-spacing:2px;color:var(--orange)}
+@media(max-width:800px){
+ .topbar{border-radius:24px;padding:12px;flex-wrap:wrap;gap:8px}
+ .topbar .brand{min-width:0;flex:1}
+ .nav-tabs{order:3;flex-basis:100%;justify-content:space-around}
+ .nav-tab{padding:10px 13px}
+ .top-island{padding:10px 14px}
+ .section-heading{align-items:flex-start;flex-direction:column}
+ .room-card{grid-template-columns:minmax(0,1fr) auto;gap:9px}
+ .room-state{display:none}
+ .profile-panel{grid-template-columns:1fr;text-align:center}
+ .profile-stats{text-align:left}
+}
+@media(max-width:480px){
+ .topbar .brand-name{font-size:17px}
+ .topbar .brand-sub{font-size:8px}
+ .rooms-panel{padding:14px}
+ .room-card{padding:11px 9px}
+ .room-info b{font-size:11px}
+ .join-room{font-size:9px;padding:9px}
+ .profile-panel{padding:20px 14px}
+ .stat-card{padding:12px 9px}
+ .stat-card strong{font-size:21px}
+ .stat-card span{font-size:8px}
+}
+
+@media(max-width:800px){.layout{grid-template-columns:1fr}.side-panel{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.side-panel>.panel-head,.turn-box,.actions,.legend,.rules,.total{grid-column:1/-1}.side-panel .panel-head{margin-bottom:15px}.player{margin-bottom:8px}.intro{display:block}.status{display:none}}
+@media(max-width:480px){.shell{padding:16px 10px 25px}.brand-sub{font-size:8px}.board-wrap{padding:8px}.edge{stroke-width:4}.edge.taken{stroke-width:5}.side-panel{padding:0 10px 12px}.side-panel .panel-head{margin-left:-10px;margin-right:-10px}.player{padding:10px}.score{font-size:23px}.board-footer{font-size:8px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <a class="brand" href="/home" aria-label="SkicksFight — главная" onclick="navigate('/home');return false">
+    <div class="mark">SF</div><div><div class="brand-name">SKICKS<span style="color:var(--orange)">FIGHT</span></div><div class="brand-sub">by mrsiktyyy</div></div>
+  </a>
+  <nav class="nav-tabs" aria-label="Основная навигация">
+    <a class="nav-tab active" data-tab="home" href="/home" onclick="navigate('/home');return false">Главная</a>
+    <a class="nav-tab" data-tab="game" href="/game" onclick="navigate('/game');return false">Играть</a>
+    <a class="nav-tab" data-tab="profile" href="/profile" onclick="navigate('/profile');return false">Профиль</a>
+    <a class="nav-tab" data-tab="download" href="/download" onclick="navigate('/download');return false">Скачать</a>
+  </nav>
+  <div class="top-island">● <span>ОСТРОВ</span></div>
+</header>
+
+<section class="tab-page active" id="page-home">
+  <section class="intro">
+    <div><div class="eyebrow">[ STRATEGY_GAME ]</div><h1>Захвати поле.</h1><p>SkicksFight — тактическая игра «Точки и квадраты». Ставь линии, замыкай клетки и получай дополнительные ходы. Создавай комнаты и соревнуйся с другими игроками.</p></div>
+  </section>
+  <section class="rooms-panel">
+    <div class="section-heading"><div><div class="eyebrow">[ MULTIPLAYER ]</div><h2>Игровые комнаты</h2><p>Найди соперника и присоединяйся к партии.</p></div></div>
+    <div class="empty-rooms" id="roomEmpty">пока-что онлайна нет</div>
+  </section>
+  <div class="local-heading"><div><div class="eyebrow">[ PRACTICE_MODE ]</div><h2>Локальная тренировка</h2><p>Пока онлайн-сервер готовится — сыграй вдвоём на одном устройстве.</p></div></div>
+  <div class="empty-rooms" id="roomEmpty">пока-что онлайна нет</div>
+  <div class="server-note">Онлайн-комнаты появятся здесь, когда будет подключён игровой сервер.</div>
+</section>
+
+<section class="tab-page" id="page-game">
+  <section class="intro game-intro">
+    <div><div class="eyebrow">[ STRATEGY_GAME ]</div><h1>Матч.</h1><p>Локальная тренировка. Онлайн-матчи подключим следующим этапом.</p></div>
+  </section>
+  <main class="layout">
+  <section class="board-panel">
+    <div class="panel-head"><span>/// Наш дискорд сервер --&gt; <a class="discord-link" href="https://discord.gg/localhost" target="_blank" rel="noopener">discord.gg/localhost</a></span></div>
+    <div class="board-wrap"><svg id="board" viewBox="0 0 500 500" role="img" aria-label="Игровое поле 8 на 8"></svg></div>
+    <div class="board-footer"><span>INPUT: CLICK / TAP ON FREE LINE</span><span id="moves">MOVES: 0 / 112</span></div>
+  </section>
+  <aside class="side-panel">
+    <div class="panel-head"><span>/// PLAYER_STATS</span><span>LIVE</span></div>
+    <div class="player p1 active" id="p1card"><div class="player-top"><div><div class="player-name" id="p1name">mrsiktyyy</div><div class="player-tag">TEAM // ORANGE</div></div><span class="turn-pill" id="p1pill">YOUR TURN</span></div><div class="score" id="p1score">00</div><div class="progress"><i id="p1bar"></i></div></div>
+    <div class="player p2" id="p2card"><div class="player-top"><div><div class="player-name" id="p2name">Opponent</div><div class="player-tag">TEAM // GREY</div></div><span class="turn-pill" id="p2pill">WAITING</span></div><div class="score" id="p2score">00</div><div class="progress"><i id="p2bar"></i></div></div>
+    <div class="total"><span>CAPTURED CELLS</span><span id="captured">0 / 64</span></div>
+    <div class="turn-box"><div class="turn-label">CURRENT PLAYER</div><div class="turn-text" id="turnText">▶ mrsiktyyy</div></div>
+    <div class="actions"><button class="action primary" id="restart">↻ NEW GAME</button><button class="action" id="names">EDIT NAMES</button><button class="action" id="rulesBtn">HOW TO PLAY</button></div>
+    <div class="legend"><span><i class="swatch"></i> YOU</span><span><i class="swatch white"></i> OPPONENT</span></div>
+    <div class="rules"><h3>// RULES</h3><p>1. Выбери свободную линию.<br>2. Замкнул квадрат — получи очко и ещё ход.<br>3. Не замкнул — ход переходит сопернику.<br>4. После заполнения поля сравните счёт.</p></div>
+  </aside>
+</main>
+</section>
+
+<section class="tab-page" id="page-profile">
+  <div class="intro"><div><div class="eyebrow">[ USER_ACCOUNT ]</div><h1>Твой профиль.</h1><p>Персональная страница игрока SkicksFight.</p></div></div>
+  <div class="profile-panel">
+    <div class="profile-avatar-wrap">
+      <img id="profileAvatar" class="profile-avatar" alt="Аватар профиля" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='60' fill='%231d1712'/%3E%3Ctext x='60' y='75' text-anchor='middle' font-size='48' fill='%23ff7a18' font-family='monospace'%3ESF%3C/text%3E%3C/svg%3E">
+      <label class="action upload-label" for="avatarInput">ЗАГРУЗИТЬ АВАТАР</label>
+      <input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+    </div>
+    <div class="profile-details"><div class="eyebrow">[ PLAYER_PROFILE ]</div><h2 id="profileName">mrsiktyyy</h2><p>Участник SkicksFight</p><div class="profile-stats">
+      <div class="stat-card"><strong id="statGames">0</strong><span>СЫГРАНО ИГР</span></div>
+      <div class="stat-card"><strong id="statWins">0</strong><span>ПОБЕД</span></div>
+      <div class="stat-card"><strong id="statRate">0%</strong><span>WIN RATE</span></div>
+    </div><p class="profile-hint">Статистика пока сохраняется только в этом браузере и будет синхронизироваться с аккаунтом после запуска онлайн-версии.</p></div>
+  </div>
+</section>
+
+<section class="tab-page soon-page" id="page-download">
+  <div class="soon-content"><div class="eyebrow">[ CLIENT_DOWNLOAD ]</div><div class="soon-mark">SF</div><h1>Скоро.</h1><p>Мы готовим отдельную версию SkicksFight.</p><span>STATUS: IN DEVELOPMENT</span></div>
+</section>
+
+<footer>SkicksFight // v1.1.3</footer>
+</div>
+<div class="modal" id="modal"><div class="modal-card"><h2 id="modalTitle">GAME OVER</h2><p id="modalText"></p><button id="modalBtn">PLAY AGAIN</button></div></div>
+<script>
+function routeName(path){
+ const clean=(path||'/home').replace(/\/+$/,'')||'/home';
+ return ({'/':'home','/home':'home','/profile':'profile','/download':'download','/game':'game'})[clean]||'home';
+}
+function navigate(path,push=true){
+ if(push&&location.pathname!==path)history.pushState({},'',path);
+ const name=routeName(path);
+ document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+ document.querySelectorAll('.nav-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+ const page=document.getElementById('page-'+name);if(page)page.classList.add('active');
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+window.addEventListener('popstate',()=>navigate(location.pathname,false));
+function joinRoom(roomName){
+ alert('Комната «'+roomName+'» пока демонстрационная. Онлайн-подключение появится после запуска сервера. Сейчас доступна локальная тренировка ниже на главной странице.');
+ navigate('/home');
+ document.querySelector('.local-heading').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function createRoom(){
+ alert('Создание онлайн-комнат будет доступно после подключения сервера. Сейчас можно сыграть в локальную тренировку на главной странице.');
+}
+const profileData=JSON.parse(localStorage.getItem('skicksfight_profile')||'{}');
+function refreshProfile(){
+ document.getElementById('statGames').textContent=profileData.games||0;
+ document.getElementById('statWins').textContent=profileData.wins||0;
+ document.getElementById('statRate').textContent=(profileData.games?Math.round((profileData.wins||0)/profileData.games*100):0)+'%';
+ if(profileData.avatar)document.getElementById('profileAvatar').src=profileData.avatar;
+ if(profileData.name)document.getElementById('profileName').textContent=profileData.name;
+}
+document.getElementById('avatarInput').addEventListener('change',e=>{
+ const file=e.target.files[0];if(!file)return;
+ if(!file.type.startsWith('image/'))return alert('Выбери файл изображения.');
+ const reader=new FileReader();reader.onload=()=>{profileData.avatar=reader.result;localStorage.setItem('skicksfight_profile',JSON.stringify(profileData));refreshProfile()};reader.readAsDataURL(file);
+});
+refreshProfile();
+navigate(location.pathname,false);
+</script>
+<script>
+(() => {
+ const N=8, S=500, PAD=28, STEP=(S-PAD*2)/N, svg=document.getElementById('board');
+ let hEdges, vEdges, owners, player, moves, finished=false, modalMode='end', names=['mrsiktyyy','Opponent'];
+ const NS='http://www.w3.org/2000/svg';
+ const el=(tag,attrs={})=>{const n=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);return n};
+ const pos=(x,y)=>({x:PAD+x*STEP,y:PAD+y*STEP});
+ function init(){
+  hEdges=Array.from({length:N+1},(_,y)=>Array.from({length:N},(_,x)=>y===0||y===N?2:0));
+  vEdges=Array.from({length:N},(_,y)=>Array.from({length:N+1},(_,x)=>x===0||x===N?2:0));
+  owners=Array.from({length:N},()=>Array(N).fill(0));player=1;moves=0;finished=false;
+  document.getElementById('modal').classList.remove('show');document.getElementById('modalBtn').textContent='PLAY AGAIN';modalMode='end';render();
+ }
+ function line(x1,y1,x2,y2,type,x,y,val){
+  const a=pos(x1,y1),b=pos(x2,y2);
+  const cls=val===2?'edge boundary':val===1?'edge taken p1':val===-1?'edge taken p2':'edge';
+  const l=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:cls,'data-type':type,'data-x':x,'data-y':y});
+  if(val===0)l.addEventListener('click',()=>play(type,x,y));
+  svg.appendChild(l);
+ }
+ function render(){
+  svg.replaceChildren();
+  svg.appendChild(el('rect',{x:PAD,y:PAD,width:S-PAD*2,height:S-PAD*2,class:'board-bg'}));
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!owners[y][x]){
+   const p=pos(x,y), hit=el('rect',{x:p.x+2,y:p.y+2,width:STEP-4,height:STEP-4,rx:2,class:'cell-hit'});
+   svg.appendChild(hit);
+  }
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(owners[y][x]){
+   const p=pos(x,y),color=owners[y][x]===1?'#ff7a18':'#454545',labelColor=owners[y][x]===1?'#ff7a18':'#b0b0b0';
+   svg.appendChild(el('rect',{x:p.x+4,y:p.y+4,width:STEP-8,height:STEP-8,rx:3,fill:color,class:'cell-fill'}));
+   const t=el('text',{x:p.x+STEP/2,y:p.y+STEP/2+1,fill:labelColor,class:'cell-label'});t.textContent=owners[y][x]===1?'1':'2';svg.appendChild(t);
+  }
+  svg.querySelectorAll('.cell-hit').forEach(hit=>{
+   hit.addEventListener('mouseenter',()=>hit.classList.add('hovered'));
+   hit.addEventListener('mouseleave',()=>hit.classList.remove('hovered'));
+  });
+  for(let y=0;y<=N;y++)for(let x=0;x<N;x++)line(x,y,x+1,y,'h',x,y,hEdges[y][x]);
+  for(let y=0;y<N;y++)for(let x=0;x<=N;x++)line(x,y,x,y+1,'v',x,y,vEdges[y][x]);
+  updateUI();
+ }
+ function complete(x,y){
+  if(x<0||x>=N||y<0||y>=N)return false;
+  return hEdges[y][x]!==0&&hEdges[y+1][x]!==0&&vEdges[y][x]!==0&&vEdges[y][x+1]!==0;
+ }
+ function play(type,x,y){
+  if(finished)return;
+  const arr=type==='h'?hEdges:vEdges;if(arr[y][x]!==0)return;
+  arr[y][x]=player;
+  let gained=0;
+  const checks=type==='h'?[[x,y-1],[x,y]]:[[x-1,y],[x,y]];
+  for(const [cx,cy] of checks)if(complete(cx,cy)&&owners[cy][cx]===0){owners[cy][cx]=player;gained++}
+  moves++;
+  if(!gained)player=3-player;
+  const total=owners.flat().filter(Boolean).length;
+  if(total===N*N){finished=true}
+  render();
+  if(finished)endGame();
+ }
+ function updateUI(){
+  const scores=[owners.flat().filter(v=>v===1).length,owners.flat().filter(v=>v===2).length];
+  document.getElementById('p1name').textContent=names[0];document.getElementById('p2name').textContent=names[1];
+  document.getElementById('p1score').textContent=String(scores[0]).padStart(2,'0');document.getElementById('p2score').textContent=String(scores[1]).padStart(2,'0');
+  document.getElementById('p1bar').style.width=(scores[0]/64*100)+'%';document.getElementById('p2bar').style.width=(scores[1]/64*100)+'%';
+  document.getElementById('p1card').classList.toggle('active',player===1&&!finished);document.getElementById('p2card').classList.toggle('active',player===2&&!finished);
+  document.getElementById('p1pill').textContent=player===1&&!finished?'YOUR TURN':'WAITING';document.getElementById('p2pill').textContent=player===2&&!finished?'YOUR TURN':'WAITING';
+  document.getElementById('turnText').textContent=finished?'■ MATCH COMPLETE':'▶ '+names[player-1]+(moves>0&&lastGained?' // EXTRA TURN':'');
+  document.getElementById('captured').textContent=(scores[0]+scores[1])+' / 64';document.getElementById('moves').textContent='MOVES: '+moves+' / 112';
+ }
+ let lastGained=false;
+ const oldPlay=play;
+ // Track extra-turn message without changing game flow.
+ function endGame(){
+  const a=owners.flat().filter(v=>v===1).length,b=owners.flat().filter(v=>v===2).length;
+  profileData.games=(profileData.games||0)+1;
+  if(a>b)profileData.wins=(profileData.wins||0)+1;
+  localStorage.setItem('skicksfight_profile',JSON.stringify(profileData));refreshProfile();
+  document.getElementById('modalTitle').textContent=a===b?'DRAW.exe':'WINNER.exe';
+  document.getElementById('modalText').textContent=a===b?'Ничья! Оба игрока захватили по '+a+' клеток.':(a>b?names[0]:names[1])+' победил(а)! Счёт: '+a+' : '+b+'. Отличная тактика.';
+  modalMode='end';document.getElementById('modalBtn').textContent='PLAY AGAIN';document.getElementById('modal').classList.add('show');
+ }
+ document.getElementById('restart').onclick=()=>{if(confirm('Начать новую партию? Текущий счёт будет сброшен.'))init()};
+ document.getElementById('modalBtn').onclick=()=>{if(modalMode==='rules'){document.getElementById('modal').classList.remove('show');document.getElementById('modalBtn').textContent='PLAY AGAIN';modalMode='end';}else init();};
+ document.getElementById('names').onclick=()=>{
+  const a=prompt('Ник первого игрока:',names[0]);if(a===null)return;
+  const b=prompt('Ник второго игрока:',names[1]);if(b===null)return;
+  names=[a.trim()||'mrsiktyyy',b.trim()||'Opponent'];updateUI();
+ };
+ document.getElementById('rulesBtn').onclick=()=>{modalMode='rules';document.getElementById('modalTitle').textContent='HOW TO PLAY';document.getElementById('modalText').textContent='Нажимайте на свободные внутренние линии по очереди. Если линия завершает одну или несколько клеток, они переходят текущему игроку, и он ходит снова. Если клетка не закрыта — очередь переходит сопернику. Игра заканчивается после заполнения всех 64 клеток.';document.getElementById('modalBtn').textContent='GOT IT';document.getElementById('modal').classList.add('show')};
+ // Keep the extra-turn indicator accurate.
+ const originalRender=render;
+ render=function(){originalRender();};
+ const originalPlay=play;
+ play=function(type,x,y){
+  if(finished)return;
+  const before=owners.flat().filter(Boolean).length;
+  originalPlay(type,x,y);
+  const after=owners.flat().filter(Boolean).length;
+  lastGained=after>before;
+  if(!finished)document.getElementById('turnText').textContent='▶ '+names[player-1]+(lastGained?' // EXTRA TURN':'');
+ };
+ init();
+})();
+</script>
+</body>
+</html>
