@@ -186,7 +186,17 @@ body.sf-revealing .shell{animation:sfSiteIn .85s cubic-bezier(.2,.75,.25,1) both
 @keyframes sfSiteIn{from{opacity:0;transform:translateY(12px);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
 @media(prefers-reduced-motion:reduce){#sf-gate,.sf-gate-inner,.sf-gate-mark,.sf-loader i,body.sf-revealing .shell{animation:none!important;transition:none!important}}
 
+
+.auth-pill{border:1px solid #303036;background:#1b1b20;border-radius:28px;padding:13px 20px;color:var(--orange);font-size:11px;white-space:nowrap}
+.auth-pill span{color:#eee;font-weight:700;letter-spacing:1px;margin-left:5px}
+.room-card .room-state{color:var(--green)}
+.room-empty{min-height:100px}
+#authModal input:focus,#roomModal input:focus{outline:none;border-color:var(--orange)}
+#authModal .modal-card button,#roomModal .modal-card button{margin:7px 0}
+@media(max-width:800px){.top-island{padding:10px 14px}}
+
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -217,7 +227,7 @@ body.sf-revealing .shell{animation:sfSiteIn .85s cubic-bezier(.2,.75,.25,1) both
     <a class="nav-tab" data-tab="profile" href="/profile" onclick="navigate('/profile');return false">Профиль</a>
     <a class="nav-tab" data-tab="download" href="/download" onclick="navigate('/download');return false">Скачать</a>
   </nav>
-  <div class="top-island">● <span>ОСТРОВ</span></div>
+  <button class="top-island" id="accountButton" onclick="openAuth()">● <span>ВХОД</span></button>
 </header>
 
 <section class="tab-page active" id="page-home">
@@ -225,8 +235,8 @@ body.sf-revealing .shell{animation:sfSiteIn .85s cubic-bezier(.2,.75,.25,1) both
     <div><div class="eyebrow">[ STRATEGY_GAME ]</div><h1>Захвати поле.</h1><p>SticksFight — тактическая игра «Точки и квадраты». Ставь линии, замыкай клетки и получай дополнительные ходы. Создавай комнаты и соревнуйся с другими игроками.</p></div>
   </section>
   <section class="rooms-panel">
-    <div class="section-heading"><div><div class="eyebrow">[ MULTIPLAYER ]</div><h2>Игровые комнаты</h2><p>Найди соперника и присоединяйся к партии.</p></div></div>
-    <div class="empty-rooms" id="roomEmpty">пока-что онлайна нет</div>
+    <div class="section-heading"><div><div class="eyebrow">[ MULTIPLAYER ]</div><h2>Игровые комнаты</h2><p>Создавай комнату как гость или войди в аккаунт.</p></div><button class="action primary create-room" onclick="createRoom()">＋ СОЗДАТЬ КОМНАТУ</button></div>
+    <div class="room-list" id="roomList"><div class="empty-rooms" id="roomEmpty">Подключаем список комнат...</div></div>
   </section>
   <div class="local-heading"><div><div class="eyebrow">[ PRACTICE_MODE ]</div><h2>Локальная тренировка</h2><p>Пока онлайн-сервер готовится — сыграй вдвоём на одном устройстве.</p></div></div>
   <div class="empty-rooms" id="roomEmpty">пока-что онлайна нет</div>
@@ -261,14 +271,14 @@ body.sf-revealing .shell{animation:sfSiteIn .85s cubic-bezier(.2,.75,.25,1) both
   <div class="profile-panel">
     <div class="profile-avatar-wrap">
       <img id="profileAvatar" class="profile-avatar" alt="Аватар профиля" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='60' fill='%231d1712'/%3E%3Ctext x='60' y='75' text-anchor='middle' font-size='48' fill='%23ff7a18' font-family='monospace'%3ESF%3C/text%3E%3C/svg%3E">
-      <label class="action upload-label" for="avatarInput">ЗАГРУЗИТЬ АВАТАР</label>
+      <label class="action upload-label" id="avatarUploadLabel" for="avatarInput">ЗАГРУЗИТЬ АВАТАР</label>
       <input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     </div>
-    <div class="profile-details"><div class="eyebrow">[ PLAYER_PROFILE ]</div><h2 id="profileName">mrsiktyyy</h2><p>Участник SticksFight</p><div class="profile-stats">
+    <div class="profile-details"><div class="eyebrow">[ PLAYER_PROFILE ]</div><h2 id="profileName">Гость</h2><p id="profileMode">Гостевой режим</p><div class="name-edit" id="profileEdit" style="display:none"><input id="newNick" maxlength="18" placeholder="Новый ник"><button class="action" onclick="saveNickname()">СОХРАНИТЬ НИК</button></div><button class="action primary" id="profileLoginBtn" onclick="openAuth()">ВОЙТИ / РЕГИСТРАЦИЯ</button><button class="action" id="logoutBtn" style="display:none" onclick="logout()">ВЫЙТИ</button><div class="profile-stats">
       <div class="stat-card"><strong id="statGames">0</strong><span>СЫГРАНО ИГР</span></div>
       <div class="stat-card"><strong id="statWins">0</strong><span>ПОБЕД</span></div>
       <div class="stat-card"><strong id="statRate">0%</strong><span>WIN RATE</span></div>
-    </div><p class="profile-hint">Статистика пока сохраняется только в этом браузере и будет синхронизироваться с аккаунтом после запуска онлайн-версии.</p></div>
+    </div><p class="profile-hint" id="profileHint">В гостевом режиме нельзя менять ник и аватар. Войди или зарегистрируйся, чтобы настроить профиль.</p></div>
   </div>
 </section>
 
@@ -278,6 +288,30 @@ body.sf-revealing .shell{animation:sfSiteIn .85s cubic-bezier(.2,.75,.25,1) both
 
 <footer>SticksFight // v1.1.3</footer>
 </div>
+
+<div class="modal" id="authModal" style="z-index:30">
+ <div class="modal-card" style="text-align:left">
+  <div class="eyebrow">[ STICKSFIGHT_ACCOUNT ]</div>
+  <h2 id="authTitle">Вход</h2>
+  <p id="authDescription">Войди в аккаунт или создай новый.</p>
+  <input id="authNick" autocomplete="username" maxlength="18" placeholder="Ник" style="display:block;width:100%;margin:10px 0;background:#090909;border:1px solid #37302a;color:#fff;padding:12px">
+  <input id="authPassword" type="password" autocomplete="current-password" placeholder="Пароль" style="display:block;width:100%;margin:10px 0;background:#090909;border:1px solid #37302a;color:#fff;padding:12px">
+  <p id="authError" style="color:#ff8a70;min-height:16px"></p>
+  <button id="authSubmit" onclick="submitAuth()" style="width:100%">ВОЙТИ</button>
+  <button class="action" id="authSwitch" onclick="toggleAuthMode()" style="width:100%">НЕТ АККАУНТА? РЕГИСТРАЦИЯ</button>
+  <button class="action" onclick="closeAuth()" style="width:100%">ЗАКРЫТЬ</button>
+ </div>
+</div>
+<div class="modal" id="roomModal" style="z-index:20">
+ <div class="modal-card" style="text-align:left">
+  <div class="eyebrow">[ NEW_MULTIPLAYER_ROOM ]</div><h2>Создать комнату</h2>
+  <input id="roomTitle" maxlength="28" placeholder="Название комнаты" value="Новая игра" style="display:block;width:100%;margin:12px 0;background:#090909;border:1px solid #37302a;color:#fff;padding:12px">
+  <p id="roomError" style="color:#ff8a70;min-height:16px"></p>
+  <button onclick="confirmCreateRoom()" style="width:100%">СОЗДАТЬ</button>
+  <button class="action" onclick="document.getElementById('roomModal').classList.remove('show')" style="width:100%">ОТМЕНА</button>
+ </div>
+</div>
+
 <div class="modal" id="modal"><div class="modal-card"><h2 id="modalTitle">GAME OVER</h2><p id="modalText"></p><button id="modalBtn">PLAY AGAIN</button></div></div>
 <script>
 function routeName(path){
@@ -301,19 +335,12 @@ function joinRoom(roomName){
 function createRoom(){
  alert('Создание онлайн-комнат будет доступно после подключения сервера. Сейчас можно сыграть в локальную тренировку на главной странице.');
 }
-const profileData=JSON.parse(localStorage.getItem('skicksfight_profile')||'{}');
+const profileData={games:0,wins:0};
 function refreshProfile(){
  document.getElementById('statGames').textContent=profileData.games||0;
  document.getElementById('statWins').textContent=profileData.wins||0;
  document.getElementById('statRate').textContent=(profileData.games?Math.round((profileData.wins||0)/profileData.games*100):0)+'%';
- if(profileData.avatar)document.getElementById('profileAvatar').src=profileData.avatar;
- if(profileData.name)document.getElementById('profileName').textContent=profileData.name;
 }
-document.getElementById('avatarInput').addEventListener('change',e=>{
- const file=e.target.files[0];if(!file)return;
- if(!file.type.startsWith('image/'))return alert('Выбери файл изображения.');
- const reader=new FileReader();reader.onload=()=>{profileData.avatar=reader.result;localStorage.setItem('skicksfight_profile',JSON.stringify(profileData));refreshProfile()};reader.readAsDataURL(file);
-});
 refreshProfile();
 navigate(location.pathname,false);
 </script>
@@ -411,11 +438,22 @@ navigate(location.pathname,false);
  const originalPlay=play;
  play=function(type,x,y){
   if(finished)return;
+  if(window.sfActiveRoom&&window.sfLocalSeat&&window.sfLocalSeat!==player)return;
+  const mover=player;
   const before=owners.flat().filter(Boolean).length;
   originalPlay(type,x,y);
   const after=owners.flat().filter(Boolean).length;
   lastGained=after>before;
   if(!finished)document.getElementById('turnText').textContent='▶ '+names[player-1]+(lastGained?' // EXTRA TURN':'');
+  if(!window.sfApplyingRemote&&window.sfSyncGameState&&window.sfActiveRoom){
+   window.sfSyncGameState({hEdges,vEdges,owners,player,moves,finished,lastMoveBy:mover,names:[...names]});
+  }
+ };
+ window.sfApplyGameState=(state)=>{
+  if(!state||!state.hEdges)return;
+  window.sfApplyingRemote=true;
+  hEdges=state.hEdges;vEdges=state.vEdges;owners=state.owners;player=state.player;moves=state.moves;finished=state.finished;names=state.names||names;
+  render();window.sfApplyingRemote=false;
  };
  init();
 })();
@@ -434,6 +472,182 @@ navigate(location.pathname,false);
  check.addEventListener('click',toggle);check.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
  enter.addEventListener('click',pass);
 })();
+</script>
+
+
+<script>
+/* Supabase account + lobby. Only the publishable key belongs in browser code. */
+const SF_SUPABASE_URL='https://nqetluxumnlaqckpshvq.supabase.co';
+const SF_SUPABASE_KEY='sb_publishable_UBnyQUK6MSIlrVAgbBgtLQ_6d9wQbnR';
+const sfdb=window.supabase.createClient(SF_SUPABASE_URL,SF_SUPABASE_KEY);
+let sfUser=null,sfProfile=null,sfGuest=false,sfAuthMode='login',sfRoomChannel=null,sfRoomsChannel=null;
+let sfActiveRoom=null;
+const sfEmailForNick=n=>`${n.toLowerCase()}@sticksfight.game`;
+const sfNickValid=n=>/^[a-zA-Z0-9_А-Яа-яЁё-]{3,18}$/.test(n);
+function openAuth(){sfAuthMode='login';document.getElementById('authModal').classList.add('show');renderAuthMode()}
+function closeAuth(){document.getElementById('authModal').classList.remove('show')}
+function toggleAuthMode(){sfAuthMode=sfAuthMode==='login'?'signup':'login';renderAuthMode()}
+function renderAuthMode(){
+ document.getElementById('authTitle').textContent=sfAuthMode==='login'?'Вход':'Регистрация';
+ document.getElementById('authDescription').textContent=sfAuthMode==='login'?'Введи ник и пароль.':'Придумай ник и пароль (не менее 8 символов).';
+ document.getElementById('authSubmit').textContent=sfAuthMode==='login'?'ВОЙТИ':'СОЗДАТЬ АККАУНТ';
+ document.getElementById('authSwitch').textContent=sfAuthMode==='login'?'НЕТ АККАУНТА? РЕГИСТРАЦИЯ':'УЖЕ ЕСТЬ АККАУНТ? ВОЙТИ';
+ document.getElementById('authError').textContent='';
+}
+async function submitAuth(){
+ const nick=document.getElementById('authNick').value.trim(),password=document.getElementById('authPassword').value;
+ const err=document.getElementById('authError'),btn=document.getElementById('authSubmit');
+ err.textContent='';
+ if(!sfNickValid(nick)){err.textContent='Ник: 3–18 символов, буквы, цифры, _ или -.';return}
+ if(password.length<8){err.textContent='Пароль должен содержать минимум 8 символов.';return}
+ btn.disabled=true;
+ try{
+  const email=sfEmailForNick(nick);
+  let result;
+  if(sfAuthMode==='signup'){
+   result=await sfdb.auth.signUp({email,password,options:{data:{nickname:nick}}});
+   if(result.error)throw result.error;
+   if(!result.data.session)throw new Error('Supabase всё ещё ожидает подтверждение email. Проверь настройки Auth.');
+  }else{
+   const lookup=await sfdb.rpc('get_login_email',{p_nickname:nick});
+   if(lookup.error)throw lookup.error;
+   result=await sfdb.auth.signInWithPassword({email:lookup.data||email,password});
+   if(result.error)throw result.error;
+  }
+  await sfLoadSession();closeAuth();
+ }catch(e){err.textContent=sfFriendlyError(e.message)}
+ finally{btn.disabled=false}
+}
+function sfFriendlyError(s){
+ if(/already registered|already exists/i.test(s))return 'Этот ник уже занят.';
+ if(/Invalid login credentials/i.test(s))return 'Неверный ник или пароль.';
+ if(/anonymous/i.test(s))return 'Включи Anonymous Sign-Ins в Supabase для гостевого режима.';
+ return s||'Не удалось выполнить запрос.';
+}
+async function sfLoadSession(){
+ const {data:{session}}=await sfdb.auth.getSession();
+ sfUser=session?.user||null;
+ sfGuest=!!sfUser?.is_anonymous;
+ if(sfUser&&!sfGuest){
+  const {data,error}=await sfdb.from('profiles').select('*').eq('id',sfUser.id).maybeSingle();
+  if(error)console.warn(error);
+  sfProfile=data||{id:sfUser.id,nickname:sfUser.user_metadata?.nickname||'Игрок'};
+ }else sfProfile=null;
+ sfRenderIdentity();await sfRefreshRooms();
+}
+function sfRenderIdentity(){
+ const nick=sfGuest?'Гость':(sfProfile?.nickname||'Игрок');
+ document.getElementById('accountButton').innerHTML=`● <span>${sfUser?(sfGuest?'ГОСТЬ':'АККАУНТ'):'ВХОД'}</span>`;
+ document.getElementById('profileName').textContent=nick;
+ document.getElementById('profileMode').textContent=sfGuest?'Гостевой режим':(sfUser?'Аккаунт SticksFight':'Вы не вошли в аккаунт');
+ document.getElementById('profileLoginBtn').style.display=sfUser?'none':'inline-block';
+ document.getElementById('logoutBtn').style.display=sfUser?'inline-block':'none';
+ document.getElementById('profileEdit').style.display=sfUser&&!sfGuest?'flex':'none';
+ document.getElementById('avatarUploadLabel').style.display=sfUser&&!sfGuest?'inline-block':'none';
+ document.getElementById('profileHint').textContent=sfGuest?'Ты играешь как Гость. Для постоянного ника, аватара и статистики создай аккаунт.':'Профиль и статистика аккаунта синхронизируются через Supabase.';
+ if(sfProfile?.avatar_url)document.getElementById('profileAvatar').src=sfProfile.avatar_url;
+ if(!sfUser)document.getElementById('profileAvatar').src='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"%3E%3Crect width="120" height="120" rx="60" fill="%231d1712"/%3E%3Ctext x="60" y="75" text-anchor="middle" font-size="48" fill="%23ff7a18" font-family="monospace"%3ESF%3C/text%3E%3C/svg%3E';
+}
+async function saveNickname(){
+ if(!sfUser||sfGuest)return;
+ const nick=document.getElementById('newNick').value.trim();
+ if(!sfNickValid(nick)){alert('Ник должен содержать 3–18 символов.');return}
+ const {error}=await sfdb.from('profiles').update({nickname:nick}).eq('id',sfUser.id);
+ if(error){alert(sfFriendlyError(error.message));return}
+ sfProfile.nickname=nick;sfRenderIdentity();
+}
+document.getElementById('avatarInput').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ if(!sfUser||sfGuest){alert('Аватар доступен только аккаунтам.');return}
+ if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024){alert('Нужен PNG/JPG/WebP до 2 МБ.');return}
+ const path=`${sfUser.id}/avatar-${Date.now()}.${file.type.split('/')[1]}`;
+ const {error}=await sfdb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
+ if(error){alert(sfFriendlyError(error.message));return}
+ const {data}=sfdb.storage.from('avatars').getPublicUrl(path);
+ const upd=await sfdb.from('profiles').update({avatar_url:data.publicUrl}).eq('id',sfUser.id);
+ if(upd.error){alert(upd.error.message);return}
+ sfProfile.avatar_url=data.publicUrl;sfRenderIdentity();
+});
+async function logout(){
+ await sfdb.auth.signOut();sfUser=null;sfProfile=null;sfGuest=false;sfRenderIdentity();await sfStartGuest();
+}
+async function sfStartGuest(){
+ const {data:{session}}=await sfdb.auth.getSession();
+ if(!session){
+  const {error}=await sfdb.auth.signInAnonymously();
+  if(error){console.warn('Guest sign-in:',error.message);sfRenderIdentity();return}
+ }
+ await sfLoadSession();
+}
+async function createRoom(){
+ document.getElementById('roomError').textContent='';
+ document.getElementById('roomModal').classList.add('show');
+}
+async function confirmCreateRoom(){
+ const title=(document.getElementById('roomTitle').value.trim()||'Новая игра').slice(0,28);
+ const err=document.getElementById('roomError');err.textContent='';
+ if(!sfUser){err.textContent='Гостевой вход не активен. Включи Anonymous Sign-Ins в Supabase.';return}
+ const code=Math.random().toString(36).slice(2,7).toUpperCase();
+ const nickname=sfGuest?'Гость':(sfProfile?.nickname||'Игрок');
+ const {data,error}=await sfdb.from('rooms').insert({code,title,host_id:sfUser.id,host_name:nickname,status:'waiting',state:{hEdges:null,vEdges:null,owners:null,player:1,moves:0,finished:false}}).select().single();
+ if(error){err.textContent=sfFriendlyError(error.message);return}
+ document.getElementById('roomModal').classList.remove('show');
+ await sfRefreshRooms();await sfEnterRoom(data);
+}
+async function sfRefreshRooms(){
+ const box=document.getElementById('roomList');if(!box)return;
+ const {data,error}=await sfdb.from('rooms').select('id,code,title,host_name,guest_name,status,created_at').eq('status','waiting').order('created_at',{ascending:false}).limit(40);
+ if(error){box.innerHTML='<div class="empty-rooms">Не удалось загрузить комнаты. Проверь SQL и RLS в Supabase.</div>';return}
+ if(!data?.length){box.innerHTML='<div class="empty-rooms">Пока-что комнат нет. Создай первую!</div>';return}
+ box.innerHTML='';
+ for(const room of data){
+  const card=document.createElement('div');card.className='room-card';
+  const info=document.createElement('div');info.className='room-info';
+  const dot=document.createElement('i');dot.className='room-dot';
+  const details=document.createElement('div');const b=document.createElement('b');b.textContent=room.title;
+  const small=document.createElement('small');small.textContent=`${room.host_name} · код ${room.code}`;
+  details.append(b,small);info.append(dot,details);
+  const state=document.createElement('span');state.className='room-state';state.textContent='ОЖИДАЕТ';
+  const join=document.createElement('button');join.className='action join-room';join.textContent='ВОЙТИ';join.onclick=()=>sfJoinRoom(room.id);
+  card.append(info,state,join);box.append(card);
+ }
+}
+async function sfJoinRoom(id){
+ if(!sfUser){alert('Не удалось создать гостевую сессию.');return}
+ const {data:room,error}=await sfdb.from('rooms').select('*').eq('id',id).single();
+ if(error){alert(error.message);return}
+ if(room.host_id===sfUser.id){await sfEnterRoom(room);return}
+ if(room.guest_id&&room.guest_id!==sfUser.id){alert('Комната уже занята.');return}
+ const nick=sfGuest?'Гость':(sfProfile?.nickname||'Игрок');
+ const {data,error:joinError}=await sfdb.from('rooms').update({guest_id:sfUser.id,guest_name:nick,status:'playing'}).eq('id',id).is('guest_id',null).select().single();
+ if(joinError||!data){alert('Не удалось войти: возможно, комната уже занята.');return}
+ await sfEnterRoom(data);
+}
+async function sfEnterRoom(room){
+ sfActiveRoom=room;window.sfActiveRoom=room;window.sfLocalSeat=(room.host_id===sfUser.id?1:2);
+ document.getElementById('page-game').querySelector('.game-intro p').textContent=`Комната ${room.code} · ${room.host_name} против ${room.guest_name||'ожидание соперника'}.`;
+ navigate('/game');
+ if(room.state?.hEdges&&window.sfApplyGameState)window.sfApplyGameState(room.state);
+ if(sfRoomChannel)await sfdb.removeChannel(sfRoomChannel);
+ sfRoomChannel=sfdb.channel('room-'+room.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:'id=eq.'+room.id},payload=>{
+  const fresh=payload.new;sfActiveRoom=fresh;window.sfActiveRoom=fresh;
+  if(fresh.state&&window.sfApplyGameState)window.sfApplyGameState(fresh.state);
+  document.getElementById('page-game').querySelector('.game-intro p').textContent=`Комната ${fresh.code} · ${fresh.host_name} против ${fresh.guest_name||'ожидание соперника'}.`;
+ }).subscribe();
+}
+async function sfSyncGameState(state){
+ if(!sfActiveRoom||!sfUser)return;
+ const mySeat=sfActiveRoom.host_id===sfUser.id?1:(sfActiveRoom.guest_id===sfUser.id?2:0);
+ if(!mySeat||state.lastMoveBy!==mySeat)return;
+ const {data,error}=await sfdb.from('rooms').update({state}).eq('id',sfActiveRoom.id).eq('status','playing').select().single();
+ if(error)console.error('Game sync:',error.message);else sfActiveRoom=data;
+}
+async function sfSubscribeRooms(){
+ if(sfRoomsChannel)await sfdb.removeChannel(sfRoomsChannel);
+ sfRoomsChannel=sfdb.channel('public-rooms').on('postgres_changes',{event:'*',schema:'public',table:'rooms'},()=>sfRefreshRooms()).subscribe();
+}
+sfdb.auth.onAuthStateChange(()=>{setTimeout(()=>sfLoadSession(),0)});
+(async()=>{await sfStartGuest();await sfSubscribeRooms();})();
 </script>
 
 </body>
