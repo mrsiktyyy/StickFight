@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0b0b">
-<title>SkicksFight — Dots & Boxes</title>
+<title>SticksFight — Dots & Boxes</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 :root{--bg:#090909;--panel:#111;--panel2:#171717;--line:#292929;--orange:#ff7a18;--orange2:#ff9a45;--text:#f2eee9;--muted:#89837d;--p2:#777777;--green:#8bd49a}
@@ -75,7 +75,7 @@ footer{text-align:center;color:#514a43;font-size:9px;letter-spacing:1px;margin-t
 #page-game .panel-head{color:#eee}
 #page-game .panel-head span:last-child{color:var(--orange)}
 
-/* SkicksFight navigation + account pages */
+/* SticksFight navigation + account pages */
 .shell{max-width:1320px}
 .topbar{min-height:72px;padding:10px 12px 10px 24px;border:1px solid #29292d;border-radius:42px;background:#141416;display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 34px;box-shadow:0 12px 38px #0005}
 .topbar .brand{border:0;text-decoration:none;min-width:220px}
@@ -158,8 +158,8 @@ footer{text-align:center;color:#514a43;font-size:9px;letter-spacing:1px;margin-t
 <body>
 <div class="shell">
 <header class="topbar">
-  <a class="brand" href="/home" aria-label="SkicksFight — главная" onclick="navigate('/home');return false">
-    <div class="mark">SF</div><div><div class="brand-name">SKICKS<span style="color:var(--orange)">FIGHT</span></div><div class="brand-sub">by mrsiktyyy</div></div>
+  <a class="brand" href="/home" aria-label="SticksFight — главная" onclick="navigate('/home');return false">
+    <div class="mark">SF</div><div><div class="brand-name">STICKS<span style="color:var(--orange)">FIGHT</span></div><div class="brand-sub">by mrsiktyyy</div></div>
   </a>
   <nav class="nav-tabs" aria-label="Основная навигация">
     <a class="nav-tab active" data-tab="home" href="/home" onclick="navigate('/home');return false">Главная</a>
@@ -172,7 +172,7 @@ footer{text-align:center;color:#514a43;font-size:9px;letter-spacing:1px;margin-t
 
 <section class="tab-page active" id="page-home">
   <section class="intro">
-    <div><div class="eyebrow">[ STRATEGY_GAME ]</div><h1>Захвати поле.</h1><p>SkicksFight — тактическая игра «Точки и квадраты». Ставь линии, замыкай клетки и получай дополнительные ходы. Создавай комнаты и соревнуйся с другими игроками.</p></div>
+    <div><div class="eyebrow">[ STRATEGY_GAME ]</div><h1>Захвати поле.</h1><p>SticksFight — тактическая игра «Точки и квадраты». Ставь линии, замыкай клетки и получай дополнительные ходы. Создавай комнаты и соревнуйся с другими игроками.</p></div>
   </section>
   <section class="rooms-panel">
     <div class="section-heading"><div><div class="eyebrow">[ MULTIPLAYER ]</div><h2>Игровые комнаты</h2><p>Найди соперника и присоединяйся к партии.</p></div></div>
@@ -207,14 +207,14 @@ footer{text-align:center;color:#514a43;font-size:9px;letter-spacing:1px;margin-t
 </section>
 
 <section class="tab-page" id="page-profile">
-  <div class="intro"><div><div class="eyebrow">[ USER_ACCOUNT ]</div><h1>Твой профиль.</h1><p>Персональная страница игрока SkicksFight.</p></div></div>
+  <div class="intro"><div><div class="eyebrow">[ USER_ACCOUNT ]</div><h1>Твой профиль.</h1><p>Персональная страница игрока SticksFight.</p></div></div>
   <div class="profile-panel">
     <div class="profile-avatar-wrap">
       <img id="profileAvatar" class="profile-avatar" alt="Аватар профиля" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='60' fill='%231d1712'/%3E%3Ctext x='60' y='75' text-anchor='middle' font-size='48' fill='%23ff7a18' font-family='monospace'%3ESF%3C/text%3E%3C/svg%3E">
       <label class="action upload-label" for="avatarInput">ЗАГРУЗИТЬ АВАТАР</label>
       <input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     </div>
-    <div class="profile-details"><div class="eyebrow">[ PLAYER_PROFILE ]</div><h2 id="profileName">mrsiktyyy</h2><p>Участник SkicksFight</p><div class="profile-stats">
+    <div class="profile-details"><div class="eyebrow">[ PLAYER_PROFILE ]</div><h2 id="profileName">mrsiktyyy</h2><p>Участник SticksFight</p><div class="profile-stats">
       <div class="stat-card"><strong id="statGames">0</strong><span>СЫГРАНО ИГР</span></div>
       <div class="stat-card"><strong id="statWins">0</strong><span>ПОБЕД</span></div>
       <div class="stat-card"><strong id="statRate">0%</strong><span>WIN RATE</span></div>
@@ -223,10 +223,10 @@ footer{text-align:center;color:#514a43;font-size:9px;letter-spacing:1px;margin-t
 </section>
 
 <section class="tab-page soon-page" id="page-download">
-  <div class="soon-content"><div class="eyebrow">[ CLIENT_DOWNLOAD ]</div><div class="soon-mark">SF</div><h1>Скоро.</h1><p>Мы готовим отдельную версию SkicksFight.</p><span>STATUS: IN DEVELOPMENT</span></div>
+  <div class="soon-content"><div class="eyebrow">[ CLIENT_DOWNLOAD ]</div><div class="soon-mark">SF</div><h1>Скоро.</h1><p>Мы готовим отдельную версию SticksFight.</p><span>STATUS: IN DEVELOPMENT</span></div>
 </section>
 
-<footer>SkicksFight // v1.1.3</footer>
+<footer>SticksFight // v1.1.3</footer>
 </div>
 <div class="modal" id="modal"><div class="modal-card"><h2 id="modalTitle">GAME OVER</h2><p id="modalText"></p><button id="modalBtn">PLAY AGAIN</button></div></div>
 <script>

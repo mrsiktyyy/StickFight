@@ -1,4 +1,4 @@
-SkicksFight — Vercel deployment
+SticksFight — Vercel deployment
 1. Upload this folder to a GitHub repository.
 2. Import the repository into Vercel (Framework Preset: Other).
 3. Build Command: leave empty. Output Directory: .
