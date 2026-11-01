@@ -298,7 +298,7 @@ body.sf-revealing .shell{animation:sfSiteIn .85s cubic-bezier(.2,.75,.25,1) both
   <input id="authPassword" type="password" autocomplete="current-password" placeholder="Пароль" style="display:block;width:100%;margin:10px 0;background:#090909;border:1px solid #37302a;color:#fff;padding:12px">
   <p id="authError" style="color:#ff8a70;min-height:16px"></p>
   <button id="authSubmit" onclick="submitAuth()" style="width:100%">ВОЙТИ</button>
-  <button class="action" id="authSwitch" onclick="toggleAuthMode()" style="width:100%">НЕТ АККАУНТА? РЕГИСТРАЦИЯ</button>
+    <button class="action" id="authSwitch" onclick="toggleAuthMode()" style="width:100%">НЕТ АККАУНТА? РЕГИСТРАЦИЯ</button>
   <button class="action" onclick="closeAuth()" style="width:100%">ЗАКРЫТЬ</button>
  </div>
 </div>
@@ -398,7 +398,7 @@ navigate(location.pathname,false);
   moves++;
   if(!gained)player=3-player;
   const total=owners.flat().filter(Boolean).length;
-  if(total===N*N){finished=true}
+    if(total===N*N){finished=true}
   render();
   if(finished)endGame();
  }
@@ -521,7 +521,7 @@ async function submitAuth(){
 function sfFriendlyError(s){
  if(/already registered|already exists/i.test(s))return 'Этот ник уже занят.';
  if(/Invalid login credentials/i.test(s))return 'Неверный ник или пароль.';
- if(/anonymous/i.test(s))return 'Включи Anonymous Sign-Ins в Supabase для гостевого режима.';
+ if(/anonymous/i.test(s))return 'Проверь Anonymous Sign-Ins в Supabase.';
  return s||'Не удалось выполнить запрос.';
 }
 async function sfLoadSession(){
@@ -583,16 +583,65 @@ async function createRoom(){
  document.getElementById('roomError').textContent='';
  document.getElementById('roomModal').classList.add('show');
 }
+
+/* Исправлено: сначала дожидаемся авторизации гостя, затем создаём комнату. */
 async function confirmCreateRoom(){
  const title=(document.getElementById('roomTitle').value.trim()||'Новая игра').slice(0,28);
- const err=document.getElementById('roomError');err.textContent='';
- if(!sfUser){err.textContent='Гостевой вход не активен. Включи Anonymous Sign-Ins в Supabase.';return}
- const code=Math.random().toString(36).slice(2,7).toUpperCase();
- const nickname=sfGuest?'Гость':(sfProfile?.nickname||'Игрок');
- const {data,error}=await sfdb.from('rooms').insert({code,title,host_id:sfUser.id,host_name:nickname,status:'waiting',state:{hEdges:null,vEdges:null,owners:null,player:1,moves:0,finished:false}}).select().single();
- if(error){err.textContent=sfFriendlyError(error.message);return}
- document.getElementById('roomModal').classList.remove('show');
- await sfRefreshRooms();await sfEnterRoom(data);
+ const err=document.getElementById('roomError');
+ const btn=document.querySelector('#roomModal button');
+ err.textContent='';
+
+ try{
+  if(btn)btn.disabled=true;
+
+  if(window.sfReady)await window.sfReady;
+
+  let {data:{session},error}=await sfdb.auth.getSession();
+  if(error)throw error;
+
+  if(!session){
+   const result=await sfdb.auth.signInAnonymously();
+   if(result.error)throw result.error;
+   session=result.data.session;
+  }
+
+  if(!session)throw new Error('Supabase не создал гостевую сессию.');
+
+  await sfLoadSession();
+
+  if(!sfUser)throw new Error('Не удалось получить данные гостя.');
+
+  const code=Math.random().toString(36).slice(2,7).toUpperCase();
+  const nickname=sfGuest?'Гость':(sfProfile?.nickname||'Игрок');
+
+  const {data,error:roomError}=await sfdb.from('rooms').insert({
+   code,
+   title,
+   host_id:sfUser.id,
+   host_name:nickname,
+   status:'waiting',
+   state:{
+    hEdges:null,
+    vEdges:null,
+    owners:null,
+    player:1,
+    moves:0,
+    finished:false
+   }
+  }).select().single();
+
+  if(roomError)throw roomError;
+
+  document.getElementById('roomModal').classList.remove('show');
+  await sfRefreshRooms();
+  await sfEnterRoom(data);
+
+ }catch(e){
+  console.error('Create room error:',e);
+  err.textContent=e.message||'Не удалось создать комнату.';
+ }finally{
+  if(btn)btn.disabled=false;
+ }
 }
 async function sfRefreshRooms(){
  const box=document.getElementById('roomList');if(!box)return;
@@ -613,6 +662,8 @@ async function sfRefreshRooms(){
  }
 }
 async function sfJoinRoom(id){
+ if(window.sfReady)await window.sfReady;
+ if(!sfUser)await sfLoadSession();
  if(!sfUser){alert('Не удалось создать гостевую сессию.');return}
  const {data:room,error}=await sfdb.from('rooms').select('*').eq('id',id).single();
  if(error){alert(error.message);return}
@@ -647,7 +698,12 @@ async function sfSubscribeRooms(){
  sfRoomsChannel=sfdb.channel('public-rooms').on('postgres_changes',{event:'*',schema:'public',table:'rooms'},()=>sfRefreshRooms()).subscribe();
 }
 sfdb.auth.onAuthStateChange(()=>{setTimeout(()=>sfLoadSession(),0)});
-(async()=>{await sfStartGuest();await sfSubscribeRooms();})();
+
+/* Сохраняем Promise запуска, чтобы кнопки могли дождаться авторизации. */
+window.sfReady=(async()=>{
+ await sfStartGuest();
+ await sfSubscribeRooms();
+})();
 </script>
 
 </body>
